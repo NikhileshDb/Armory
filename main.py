@@ -17,24 +17,29 @@ import shutil
 from datetime import datetime
 from dtos.category_dto import add_category
 from dtos.asset_dto import add_asset
-from dtos.category_attributes_dto import add_attributes, get_attributes
+from services.bt_ble_service import BluetoothServer
+from services.bt_classic_service import BluetoothServer2
 
 create_table()
 # seed ?
 
 app = FastAPI()
 
-origins = [
-    "http://localhost:3000",
-]
+bluetooth_server = BluetoothServer()
+bluetooth_server2 = BluetoothServer2()
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# a mobile app should not need CORS setup
+# origins = [
+#     "http://localhost:3000",
+# ]
+
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=origins,
+#     allow_credentials=True,
+#     allow_methods=["*"],
+#     allow_headers=["*"],
+# )
 
 @app.get("/samples")
 def get_samples():
@@ -56,7 +61,6 @@ async def upload(files: List[UploadFile] = File(...)):
             insert_sample(file.filename, tempFolder + file.filename, datetime.now(), False)
 
         except Exception as e:
-            print(e)
             raise HTTPException(status_code=500, detail='Something went wrong')
         finally:
             await file.close()  # Use await for closing FastAPI UploadFile
@@ -102,3 +106,27 @@ async def add_attributes(categoryId: int, addAttributesObj: dict):
     insert_category_attributes(categoryId, addAttributesObj)
 
     return {"message": "Successfully added category attributes"}
+
+@app.post("/categories/{categoryId}/attributes")
+async def add_attributes(categoryId: int, addAttributesObj: dict):
+
+    insert_category_attributes(categoryId, addAttributesObj)
+
+    return {"message": "Successfully added category attributes"}
+
+@app.post("/categories/{categoryId}/attributes")
+async def add_attributes(categoryId: int, addAttributesObj: dict):
+
+    insert_category_attributes(categoryId, addAttributesObj)
+
+    return {"message": "Successfully added category attributes"}
+
+@app.post("/bt/start")
+async def start_bt_server():
+    await bluetooth_server.start();
+    return {"message": "Bluetooth server was started"}
+
+@app.post("/bt/stop")
+async def stop_bt_server():
+    await bluetooth_server.stop();
+    return {"message": "Bluetooth server was stopped"}
