@@ -1,0 +1,13 @@
+train: ../input/train/images
+val: ../input/valid/images
+test: ../input/test/images
+
+nc: 5
+names: ['bicycle', 'bottle', 'car', 'pencil', 'phone']
+
+roboflow:
+  workspace: objectdetection-o0ngf
+  project: calssification-b3tcd
+  version: 3
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/objectdetection-o0ngf/calssification-b3tcd/dataset/3

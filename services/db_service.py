@@ -130,6 +130,20 @@ def insert_category(name, description, added_date, is_active=False):
     conn.commit()
     conn.close()
 
+def get_category_attribute_data_by_name(category_name):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute('SELECT ca.data FROM categories c join category_attributes ca on c.id = ca.category_id WHERE c.name = ?', (category_name,))
+    sample = cursor.fetchone()
+
+    conn.close()
+
+    if sample:
+        return sample['data'] 
+    else:
+        return None  
+
 def get_category_attributes(category_id):
     conn = get_db_connection()
     cursor = conn.cursor()

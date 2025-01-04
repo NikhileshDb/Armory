@@ -1,3 +1,4 @@
+# bless, bleak
 from typing import Any
 from bless import BlessServer, BlessGATTCharacteristic, GATTCharacteristicProperties, GATTAttributePermissions
 import logging
@@ -64,7 +65,7 @@ class BluetoothServer:
 class ImageCharacteristic(BlessGATTCharacteristic):
     def __init__(self):
         super().__init__(
-            uuid=BLEConstants.CHARACTERISTIC_UUID,
+            uuid= BTBLEConstants.CHARACTERISTIC_UUID,
             properties=GATTCharacteristicProperties.write | GATTCharacteristicProperties.read,
             permissions=GATTAttributePermissions.readable | GATTAttributePermissions.writeable,
             value=None

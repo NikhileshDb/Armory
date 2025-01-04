@@ -1,4 +1,5 @@
 from fastapi import FastAPI, File, UploadFile, HTTPException, BackgroundTasks
+from fastapi.responses import JSONResponse
 from services.db_service import (
     create_table,
     get_all_samples,
@@ -18,7 +19,8 @@ from datetime import datetime
 from dtos.category_dto import add_category
 from dtos.asset_dto import add_asset
 from services.bt_ble_service import BluetoothServer
-from services.bt_classic_service import BluetoothServer2
+from ai.predictor import predict
+from ai.classifier import train
 
 create_table()
 # seed ?
@@ -26,7 +28,6 @@ create_table()
 app = FastAPI()
 
 bluetooth_server = BluetoothServer()
-bluetooth_server2 = BluetoothServer2()
 
 # a mobile app should not need CORS setup
 # origins = [
@@ -107,26 +108,25 @@ async def add_attributes(categoryId: int, addAttributesObj: dict):
 
     return {"message": "Successfully added category attributes"}
 
-@app.post("/categories/{categoryId}/attributes")
-async def add_attributes(categoryId: int, addAttributesObj: dict):
+@app.post("/ai/train")
+async def train_model():
+    train()
 
-    insert_category_attributes(categoryId, addAttributesObj)
+@app.post("/ai/predict")
+async def predict_image():
+    predictions, img_base64 = predict()
 
-    return {"message": "Successfully added category attributes"}
-
-@app.post("/categories/{categoryId}/attributes")
-async def add_attributes(categoryId: int, addAttributesObj: dict):
-
-    insert_category_attributes(categoryId, addAttributesObj)
-
-    return {"message": "Successfully added category attributes"}
+    return JSONResponse(content={
+        "predictions": predictions,
+        "annotated_image_base64": img_base64
+    })
 
 @app.post("/bt/start")
 async def start_bt_server():
     await bluetooth_server.start();
-    return {"message": "Bluetooth server was started"}
+    return {"message": "Bt server started"}
 
 @app.post("/bt/stop")
 async def stop_bt_server():
     await bluetooth_server.stop();
-    return {"message": "Bluetooth server was stopped"}
+    return {"message": "Bt server stopped"}
