@@ -1,3 +1,4 @@
+import logging
 import sqlite3
 import json
 import os
@@ -65,15 +66,30 @@ def create_table():
 
 
 def get_all_samples():
-    conn = get_db_connection()
-    cursor = conn.cursor()
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
 
-    cursor.execute('SELECT * FROM samples')
+        cursor.execute('SELECT * FROM samples')
 
-    samples = cursor.fetchall()
+        # Fetch column names and rows
+        columns = [desc[0] for desc in cursor.description]
+        rows = cursor.fetchall()
 
-    conn.close()
-    return samples
+        # Convert rows to a list of dictionaries
+        samples = [dict(zip(columns, row)) for row in rows]
+
+        # Serialize to JSON
+        # Use `default=str` for datetime and other non-serializable objects
+        formatted_data = json.dumps(samples, default=str)
+        logging.info(formatted_data)
+        return formatted_data
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return json.dumps({'error': 'Unable to fetch samples'})
+    finally:
+        if conn:
+            conn.close()
 
 
 def get_sample(sample_id):

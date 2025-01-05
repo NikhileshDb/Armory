@@ -115,7 +115,9 @@ def shutdown_event():
 
 @app.get("/samples")
 def get_samples():
-    return get_all_samples()
+    data = get_all_samples()
+
+    return data
 
 
 @app.post("/samples/upload")
