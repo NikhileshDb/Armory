@@ -8,7 +8,8 @@ from datetime import datetime
 import shutil
 import asyncio
 
-from services.db_service import insert_sample
+from ai.predictor import predict
+from services.db_service import get_sample_details_by_name, insert_sample
 
 # Set up logger
 logger = logging.getLogger(__name__)
@@ -77,8 +78,12 @@ class SerialPortManager:
             # Call a function to insert sample or log details into a database
             insert_sample(f"image_{self.file_counter}.jpg", temp_folder +
                           f"image_{self.file_counter}.jpg", datetime.now(), False)
-
+            
+            sample = get_sample_details_by_name(f"image_{self.file_counter}.jpg")
+            # After updating the database get the prediction of the image and sent it to the client
+            
             logger.info(f"Image saved to {temp_path}.")
+            return sample
         except Exception as e:
             logger.exception("Error saving image to file", exc_info=e)
 
@@ -113,13 +118,30 @@ class SerialPortManager:
 
                 # Check for end of image data (JPEG EOF marker)
                 if data.endswith(b"\xFF\xD9"):  # JPEG EOF marker
-                    self.save_image_to_file(data)
-                    # Send image to WebSocket clients
-                    await self.socket_manager.broadcast_image(data)
+                    # Save the image to a file and get its metadata
+                    sample = self.save_image_to_file(data)
+
+                    if not sample:
+                        logging.error("Failed to save the image.")
+                        return
+
+                    # Perform prediction on the saved image
+                    predictions, annotated_image_base64 = predict(sample)
+
+                    if "error" in predictions:
+                        logging.error(f"Prediction error: {predictions['error']}")
+                        return
+
+                    # Log and broadcast the prediction
+                    logging.info(f"Prediction: {predictions}")
+                    await self.socket_manager.broadcast_image(annotated_image_base64)
+
+                    # Optionally send acknowledgment back to the client
                     self.send_acknowledgment()
 
+                    # Clear buffer and add optional delay
                     data.clear()  # Clear buffer for next image
-                    time.sleep(1)  # Optional delay
+                    time.sleep(1)
 
             except serial.SerialException as e:
                 logger.error(f"Serial error: {e}")

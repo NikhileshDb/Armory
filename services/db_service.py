@@ -116,6 +116,36 @@ def insert_sample(name, path, upload_date, is_deleted=False):
     conn.close()
 
 
+def get_sample_details_by_name(image_name):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        
+        query = """
+            SELECT name, path, upload_date, is_deleted
+            FROM images
+            WHERE name = ?;
+        """
+        cursor.execute(query, (image_name,))
+        result = cursor.fetchone()
+
+        if result:
+            return {
+                "name": result[0],
+                "path": result[1],
+                "upload_date": result[2],
+                "is_deleted": bool(result[3])  # Convert is_deleted to a boolean
+            }
+        else:
+            return {"error": "Image not found"}
+
+    except sqlite3.Error as e:
+        return {"error": f"Database error: {e}"}
+
+    finally:
+        conn.close()
+
 def get_all_assets():
     conn = get_db_connection()
     cursor = conn.cursor()
