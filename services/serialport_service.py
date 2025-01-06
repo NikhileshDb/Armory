@@ -7,19 +7,10 @@ import io
 from datetime import datetime
 import shutil
 import asyncio
-
+from .helper_log import logger
 from ai.predictor import predict
-from services.db_service import get_sample_details_by_name, insert_sample
-
-# Set up logger
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-ch = logging.StreamHandler()
-ch.setLevel(logging.INFO)
-formatter = logging.Formatter(
-    '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-ch.setFormatter(formatter)
-logger.addHandler(ch)
+from services.db_service import get_sample_details_by_name, insert_sample, save_prediction_to_db
+import json
 
 
 class SerialPortManager:
@@ -78,16 +69,16 @@ class SerialPortManager:
             # Call a function to insert sample or log details into a database
             insert_sample(f"image_{self.file_counter}.jpg", temp_folder +
                           f"image_{self.file_counter}.jpg", datetime.now(), False)
-            
-            sample = get_sample_details_by_name(f"image_{self.file_counter}.jpg")
+
+            sample = get_sample_details_by_name(
+                f"image_{self.file_counter}.jpg")
             # After updating the database get the prediction of the image and sent it to the client
-            
+
             logger.info(f"Image saved to {temp_path}.")
+            self.file_counter += 1
             return sample
         except Exception as e:
             logger.exception("Error saving image to file", exc_info=e)
-
-        self.file_counter += 1
 
     def display_image(self, data):
         """Display the image using PIL."""
@@ -129,12 +120,35 @@ class SerialPortManager:
                     predictions, annotated_image_base64 = predict(sample)
 
                     if "error" in predictions:
-                        logging.error(f"Prediction error: {predictions['error']}")
+                        logging.error(f"Prediction error: {
+                                      predictions['error']}")
                         return
 
-                    # Log and broadcast the prediction
-                    logging.info(f"Prediction: {predictions}")
-                    await self.socket_manager.broadcast_image(annotated_image_base64)
+                    save_prediction_to_db(
+                        prediction=predictions, annotated_image=annotated_image_base64)
+
+                    modified_data = {
+                        'class_id': predictions[0]['class_id'],
+                        'class_name': predictions[0]['class_name'],
+                        'attributes': predictions[0]['attributes'],
+                        'confidence': predictions[0]['confidence'],
+                        'bbox': predictions[0]['bbox'],
+                        'annotated_image': annotated_image_base64
+                    }
+
+                    # modified_data = {
+                    #     **predictionss,
+                    #     "annotated_image": annotated_image_base64
+                    # }
+
+                    # logger.error(modified_data)
+                    logging.info(modified_data)
+
+                    message = json.dumps(modified_data)
+                    # logger.info(f"THE MESSAGE: {predictions}")
+                    # Use the socket manager's broadcast method to send the message
+                    await self.socket_manager.broadcast(message)
+                    # await self.socket_manager.broadcast_image()
 
                     # Optionally send acknowledgment back to the client
                     self.send_acknowledgment()

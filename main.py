@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 from fastapi.responses import FileResponse, JSONResponse
 from services.db_service import (
     create_table,
+    get_all_predictions,
     get_all_samples,
     get_sample,
     insert_sample,
@@ -252,3 +253,15 @@ async def get_image(sampleId):
             return {"error": f"Failed to read the image: {str(e)}"}
     else:
         return {"error": "Image not found"}
+
+
+@app.get("/predictions")
+async def get_all_predictions_api():
+    try:
+        predictions = get_all_predictions()
+        return JSONResponse(content={"predictions": predictions})
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"message": f"An error occurred: {str(e)}"}
+        )

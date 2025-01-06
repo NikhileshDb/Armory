@@ -1,10 +1,12 @@
-import logging
+
+from fastapi import logger
 from ultralytics import YOLO
 import cv2
 import os
 import base64
 from constants import AIConstants
 from services.db_service import get_category_attribute_data_by_name
+from services.helper_log import logger
 
 
 def predict(sample):
@@ -24,14 +26,15 @@ def predict(sample):
         tuple: A list of predictions and the base64-encoded annotated image.
     """
     try:
+        logger.info(sample)
         # Define the model path
         model_path = os.path.join(
-            os.path.dirname(__file__), 
-            '..', 
-            'data', 
-            'ai', 
-            'output', 
-            'weights', 
+            os.path.dirname(__file__),
+            '..',
+            'data',
+            'ai',
+            'output',
+            'weights',
             'best.pt'
         )
 
@@ -40,9 +43,11 @@ def predict(sample):
 
         # Get the path to the test image from the sample
         test_image_path = sample["path"]
+        logger.info(test_image_path)
 
         if not os.path.exists(test_image_path):
-            raise FileNotFoundError(f"Image file not found at path: {test_image_path}")
+            raise FileNotFoundError(
+                f"Image file not found at path: {test_image_path}")
 
         # Perform prediction
         results = model(test_image_path)
@@ -71,8 +76,8 @@ def predict(sample):
         return predictions, img_base64
 
     except FileNotFoundError as e:
-        logging.error(f"FileNotFoundError: {e}")
+        logger.error(f"FileNotFoundError: {e}")
         return {"error": str(e)}, None
     except Exception as e:
-        logging.error(f"An unexpected error occurred: {e}")
+        logger.error(f"An unexpected error occurred: {e}")
         return {"error": "An error occurred during prediction. Check logs for details."}, None
