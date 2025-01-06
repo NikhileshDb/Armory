@@ -237,6 +237,20 @@ def get_all_predictions():
     return predictions
 
 
+def getPredictionById(prediction_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # Query to fetch the prediction by ID
+    cursor.execute("SELECT * FROM predictions WHERE id = ?",
+                   (prediction_id,))
+    prediction = cursor.fetchone()
+
+    # Close the connection
+    conn.close()
+    return prediction
+
+
 def get_all_assets():
     conn = get_db_connection()
     cursor = conn.cursor()

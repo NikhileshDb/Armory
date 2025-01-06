@@ -265,3 +265,15 @@ async def get_all_predictions_api():
             status_code=500,
             content={"message": f"An error occurred: {str(e)}"}
         )
+
+
+@app.get("/prediction/{prediction_id}")
+def get_prediction_by_id(prediction_id: int):
+    prediction = get_prediction_by_id(prediction_id)
+    if not prediction:
+        raise HTTPException(status_code=404, detail="Prediction not found")
+
+        # Convert the prediction to a dictionary (row_factory handles this)
+    result = dict(prediction)
+
+    return result
