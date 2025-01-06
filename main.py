@@ -38,13 +38,13 @@ class SocketManager:
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
         self.active_connections.append(websocket)
-        logger.info(f"New client connected. Total clients: {
-                    len(self.active_connections)}")
+        # logger.info(f"New client connected. Total clients: {
+        #             len(self.active_connections)}")
 
     def disconnect(self, websocket: WebSocket):
         self.active_connections.remove(websocket)
-        logger.info(f"Client disconnected. Total clients: {
-                    len(self.active_connections)}")
+        # logger.info(f"Client disconnected. Total clients: {
+        #             len(self.active_connections)}")
 
     async def broadcast(self, message: str):
         for connection in self.active_connections:
@@ -73,7 +73,7 @@ create_table()
 
 socket_service = SocketManager()
 serial_manager = SerialPortManager(
-    port="COM5", socket_manager=socket_service, baudrate=9600, output_dir="received_images")
+    port="COM3", socket_manager=socket_service, baudrate=9600, output_dir="received_images")
 
 
 app = FastAPI()
