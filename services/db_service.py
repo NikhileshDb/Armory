@@ -194,8 +194,8 @@ def save_prediction_to_db(prediction, annotated_image):
 
         # logger.critical(data)
         conn.commit()
-        logger.info(f"Prediction saved to database: {
-                    prediction[0]['class_name']} - {prediction[0]['confidence']}")
+        # logger.info(f"Prediction saved to database: {
+        #             prediction[0]['class_name']} - {prediction[0]['confidence']}")
 
     except Exception as e:
         # Log any database-related errors

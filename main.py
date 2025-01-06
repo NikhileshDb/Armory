@@ -9,6 +9,7 @@ from services.db_service import (
     get_all_predictions,
     get_all_samples,
     get_sample,
+    getPredictionById,
     insert_sample,
     get_all_assets,
     get_all_categories,
@@ -73,7 +74,7 @@ create_table()
 
 socket_service = SocketManager()
 serial_manager = SerialPortManager(
-    port="COM3", socket_manager=socket_service, baudrate=9600, output_dir="received_images")
+    port="COM5", socket_manager=socket_service, baudrate=9600, output_dir="received_images")
 
 
 app = FastAPI()
@@ -269,7 +270,7 @@ async def get_all_predictions_api():
 
 @app.get("/prediction/{prediction_id}")
 def get_prediction_by_id(prediction_id: int):
-    prediction = get_prediction_by_id(prediction_id)
+    prediction = getPredictionById(prediction_id)
     if not prediction:
         raise HTTPException(status_code=404, detail="Prediction not found")
 

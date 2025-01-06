@@ -41,8 +41,7 @@ class SerialPortManager:
             self.serial_connection = serial.Serial(
                 self.port, self.baudrate, timeout=5
             )
-            logger.info(f"Connected to {self.port} at {
-                        self.baudrate} baudrate.")
+            logger.info(f"Connected to {self.port} at {self.baudrate}.")
             self.running = True
         except serial.SerialException as e:
             logger.error(f"Failed to connect to serial port: {e}")
