@@ -13,6 +13,22 @@ from services.db_service import get_sample_details_by_name, insert_sample, save_
 import json
 
 
+def get_highest_confidence_predictions(predictions):
+    if not predictions:
+        return []
+
+    # Find the highest confidence level
+    highest_confidence = max(predictions, key=lambda x: x['confidence'])[
+        'confidence']
+
+    # Filter predictions that have the highest confidence level
+    highest_confidence_predictions = [
+        prediction for prediction in predictions if prediction['confidence'] == highest_confidence]
+
+    # Return the predictions inside a list
+    return highest_confidence_predictions
+
+
 class SerialPortManager:
     def __init__(self, port, socket_manager, baudrate=9600, output_dir="received_images"):
         """
@@ -116,37 +132,43 @@ class SerialPortManager:
                         return
 
                     # Perform prediction on the saved image
-                    predictions, annotated_image_base64 = predict(sample)
-
-                    if "error" in predictions:
-                        logging.error(f"Prediction error: {
-                                      predictions['error']}")
-                        return
+                    predictions_array, annotated_image_base64 = predict(sample)
+                    predictions = get_highest_confidence_predictions(
+                        predictions_array)
+                    # logger.info(annotated_image_base64)
+                    if len(predictions) == 0:
+                        # logging.error(f"Prediction error:{
+                        #               predictions['error']}")
+                        logger.info(
+                            "*************PPP NO PREDICTION ****************")
+                        logger.info(predictions)
+                    logger.info("*************OKKKKKK****************")
+                    logger.info(predictions)
 
                     save_prediction_to_db(
                         prediction=predictions, annotated_image=annotated_image_base64)
 
-                    modified_data = {
-                        'class_id': predictions[0]['class_id'],
-                        'class_name': predictions[0]['class_name'],
-                        'attributes': predictions[0]['attributes'],
-                        'confidence': predictions[0]['confidence'],
-                        'bbox': predictions[0]['bbox'],
-                        'annotated_image': annotated_image_base64
-                    }
-
+                    # modified_data = {
+                    #     'class_id': predictions[0]['class_id'] if predictions and 'class_id' in predictions[0] else None,
+                    #     'class_name': predictions[0]['class_name'] if predictions and 'class_name' in predictions[0] else None,
+                    #     'attributes': predictions[0]['attributes'] if predictions and 'attributes' in predictions[0] else None,
+                    #     'confidence': predictions[0]['confidence'] if predictions and 'confidence' in predictions[0] else None,
+                    #     'bbox': predictions[0]['bbox'] if predictions and 'bbox' in predictions[0] else None,
+                    #     'annotated_image': annotated_image_base64
+                    # }
                     # modified_data = {
                     #     **predictionss,
                     #     "annotated_image": annotated_image_base64
                     # }
 
                     # logger.error(modified_data)
-                    logging.info(modified_data)
+                    # logging.info(modified_data)
 
-                    message = json.dumps(modified_data)
-                    # logger.info(f"THE MESSAGE: {predictions}")
+                    # message = json.dumps(modified_data)
                     # Use the socket manager's broadcast method to send the message
-                    await self.socket_manager.broadcast(message)
+                    # logger.error("THE MESSAGE {message}".format(predictions))
+                    logger.info(f"THE MESSAGE: YOO YOO")
+                    await self.socket_manager.broadcast("Hello mr. how do you do.")
                     # await self.socket_manager.broadcast_image()
 
                     # Optionally send acknowledgment back to the client
@@ -161,6 +183,7 @@ class SerialPortManager:
                 self.disconnect()
             except Exception as e:
                 logger.error(f"Error during image processing: {e}")
+                self.send_acknowledgment()
                 data.clear()
 
     async def run(self):

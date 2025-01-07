@@ -4,8 +4,10 @@ import threading
 from fastapi import FastAPI, File, UploadFile, HTTPException, BackgroundTasks, WebSocketDisconnect, WebSocket
 from contextlib import asynccontextmanager
 from fastapi.responses import FileResponse, JSONResponse
+from db_helper import populate_database
 from services.db_service import (
     create_table,
+    delete_all_predictions,
     get_all_predictions,
     get_all_samples,
     get_sample,
@@ -70,6 +72,7 @@ class SocketManager:
 
 create_table()
 # seed ?
+populate_database()
 
 
 socket_service = SocketManager()
@@ -120,6 +123,12 @@ def get_samples():
     data = get_all_samples()
 
     return data
+
+
+@app.post("/predictions/delete")
+def predictions_deleted_all():
+    delete_all_predictions()
+    return {"message": f"Successfully deleted all predictions"}
 
 
 @app.post("/samples/upload")
@@ -260,7 +269,7 @@ async def get_image(sampleId):
 async def get_all_predictions_api():
     try:
         predictions = get_all_predictions()
-        return JSONResponse(content={"predictions": predictions})
+        return JSONResponse(predictions)
     except Exception as e:
         return JSONResponse(
             status_code=500,

@@ -171,12 +171,14 @@ def save_prediction_to_db(prediction, annotated_image):
             INSERT INTO predictions (class_id, class_name, attributes, confidence, bbox, annotated_image)
             VALUES (?, ?, ?, ?, ?, ?)
         ''', (
-            prediction[0]['class_id'],
-            prediction[0]['class_name'],
+            prediction[0]['class_id'] if prediction and 'class_id' in prediction[0] else None,
+            prediction[0]['class_name'] if prediction and 'class_name' in prediction[0] else None,
             # Serialize attributes to JSON (ensure attributes is serializable)
-            prediction[0]['attributes'],
-            prediction[0]['confidence'],
-            json.dumps(prediction[0]['bbox']),  # Serialize bbox to JSON
+            prediction[0]['attributes'] if prediction and 'attributes' in prediction[0] else None,
+            prediction[0]['confidence'] if prediction and 'confidence' in prediction[0] else None,
+            # Serialize bbox to JSON
+            json.dumps(
+                prediction[0]['bbox']) if prediction and 'bbox' in prediction[0] else None,
             annotated_image
         ))
 
@@ -235,6 +237,22 @@ def get_all_predictions():
 
     conn.close()
     return predictions
+
+
+def delete_all_predictions():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        # Delete all records from the predictions table
+        cursor.execute("DELETE FROM predictions")
+        conn.commit()  # Commit the transaction to apply the changes
+        print("All predictions have been deleted.")
+    except Exception as e:
+        conn.rollback()  # Rollback in case of any error
+        print(f"An error occurred: {e}")
+    finally:
+        conn.close()
 
 
 def getPredictionById(prediction_id):
